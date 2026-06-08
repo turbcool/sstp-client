@@ -18,7 +18,7 @@ CERT_PATH="${CERT_FILE:-/certs/ca.crt}"
 if [ -f "$CERT_PATH" ]; then
     echo "==> Installing custom CA certificate from $CERT_PATH"
     cp "$CERT_PATH" /usr/local/share/ca-certificates/custom-ca.crt
-    update-ca-certificates 2>/dev/null
+    update-ca-certificates 2>/dev/null || true
     echo "==> CA certificate installed"
 fi
 
