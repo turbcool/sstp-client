@@ -32,7 +32,14 @@ else
     echo "==> Using SSTP server as-is: $SSTP_IP"
 fi
 
-echo "==> Starting SSTP connection to $REMOTEHOST"
+ORIGINAL_GW=$(ip route show default | awk '{print $3}' | head -1)
+ORIGINAL_DEV=$(ip route show default | awk '{print $5}' | head -1)
+echo "==> Original gateway: $ORIGINAL_GW via $ORIGINAL_DEV"
+
+if [ -n "$ORIGINAL_GW" ] && [ -n "$SSTP_IP" ]; then
+    echo "==> Pinning SSTP server $SSTP_IP via $ORIGINAL_GW"
+    ip route add "$SSTP_IP"/32 via "$ORIGINAL_GW" dev "$ORIGINAL_DEV" 2>/dev/null || true
+fi
 
 SSTPC_CERT_ARGS=""
 if [ -f "$CERT_PATH" ]; then
@@ -43,6 +50,7 @@ elif [ "${CERT_WARN}" = "1" ]; then
     SSTPC_CERT_ARGS="--cert-warn"
 fi
 
+echo "==> Starting SSTP connection to $REMOTEHOST"
 exec sstpc \
     --user "$SSTP_USER" \
     --password "$SSTP_PASSWORD" \
@@ -52,4 +60,6 @@ exec sstpc \
     --log-level 4 \
     --tls-ext \
     noauth \
-    defaultroute
+    noipdefault \
+    defaultroute \
+    replacedefaultroute
